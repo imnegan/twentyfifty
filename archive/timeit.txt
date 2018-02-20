@@ -1,0 +1,46 @@
+import timeit
+
+def f(x):
+	return x*x
+
+def g(x):
+	return x
+	
+print('f', timeit.timeit('f(10)', globals=globals()))
+print(min(timeit.Timer('f(10)', globals=globals()).repeat(100, 10000)))
+
+
+class Container:pass
+
+class HasAttr:
+	def __init__(self):
+		self.attr='1'
+		
+class HasAttr2:
+	def __init__(self):
+		self.attr='2'
+		
+def testType(obj):
+	return isinstance(obj, Container)
+	
+def testHasAttr(obj):
+	return hasattr(obj, 'attr')
+	
+def testAttrIs1(obj):
+	return obj.attr=='1'
+	
+c=Container()
+h=HasAttr()
+
+print('testType')
+print(min(timeit.Timer('testType(c)', globals=globals()).repeat(100, 10000)))
+print(min(timeit.Timer('testType(h)', globals=globals()).repeat(100, 10000)))
+
+print()
+
+print('testHasAttr')
+print(min(timeit.Timer('testHasAttr(c)', globals=globals()).repeat(100, 10000)))
+print(min(timeit.Timer('testHasAttr(h)', globals=globals()).repeat(100, 10000)))
+
+print('testAttrIs1')
+print(min(timeit.Timer('testAttrIs1(h)', globals=globals()).repeat(100, 10000)))

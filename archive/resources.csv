@@ -1,0 +1,5 @@
+name,density,madeFrom
+steel,8.05,{ironOre: 2}
+ironOre,5.15,
+Water,1,"{Hydrogen: 2, Oxygen: 1}"
+superconducter,,

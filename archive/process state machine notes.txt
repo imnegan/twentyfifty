@@ -1,0 +1,36 @@
+state:		idle
+condition1:	queue>0
+action:		pass
+new state:	ready
+
+state:		ready
+condition1: inputs or space not ok
+action:		Error message
+new state:	error
+
+condition2:	inputs ok & space ok & dt
+action:		pass
+new state:	process
+
+state:		error
+condition1: inputs or space not ok
+action:		pass
+new state:	error
+
+condition2:	inputs ok & space ok
+action:		pass
+new state:	process
+
+state:		error
+condition1:	inputs ok & space ok
+action:		pass
+new state:	process
+
+state:		process
+condition1:	dq>queue & dt
+action:		queue-=delta
+state: 		process
+
+condition2:	dq<=queue
+action:
+state:		complete

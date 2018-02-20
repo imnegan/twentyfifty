@@ -1,0 +1,103 @@
+*******************************************************************************
+Revised: Jul 31, 2013                  Earth                                399
+ 
+PHYSICAL PROPERTIES (revised Sep 18, 2013):
+ Mean radius, km          = 6371.01+-0.01   Mass, 10^24 kg = 5.97219+-0.0006
+ Equ. radius, km          = 6378.14+-0.01   Mass layers:
+ Polar axis, km           = 6356.752          Atmos          = 5.1   x 10^18 kg
+ Flattening               = 1/298.257         oceans         = 1.4   x 10^21 kg
+ Density, gm cm^-3        = 5.515             crust          = 2.6   x 10^22 kg
+ J2  (GEM T2, 1990)       = 0.0010826265      mantle         = 4.043 x 10^24 kg
+ gp, m s^-2 (polar)       = 9.8321863685      outer core     = 1.835 x 10^24 kg
+ ge, m s^-2 (equatorial)  = 9.7803267715      inner core     = 9.675 x 10^22 kg
+ go, m s^-2               = 9.82022         Fluid core rad   = 3480 km
+ GM, km^3 s^-2            = 398600.440      Inner core rad   = 1215 km
+ Mean rot. rate, rad s^-1 = 7.292115*10^-5  Surface Area:
+ Sidereal period, hr      = 23.93419          land           = 1.48 x 10^8 km
+ Mean solar day, days     = 1.002738          sea            = 3.62 x 10^8 km
+ Moment of inertia        = 0.3308          Love no., k2     = 0.299
+ Mean Temperature, K      = 270             Atm. pressure    = 1.0 bar
+ Solar constant, W/m^2    = 1367.6          Vis. mag. V(1,0) = -3.86
+ Volume, 10^10 km^3       = 108.321         Geometric albedo = 0.367 
+
+DYNAMICAL CHARACTERISTICS:
+ Obliquity to orbit, deg  = 23.45           Sidereal period  = 1.0000174  yrs
+ Orbit velocity, km s^-1  = 29.7859         Sidereal period  = 365.25636  days
+ Mean daily motion, n     = 0.9856474 deg/d Escape velocity  = 11.186 km s^-1
+ Hill's sphere radius     = 234.9           Magnetic moment  = 0.61 gauss Rp^3
+*******************************************************************************
+ 
+ 
+*******************************************************************************
+Ephemeris / WWW_USER Tue Aug 29 23:35:12 2017 Pasadena, USA      / Horizons    
+*******************************************************************************
+Target body name: Earth (399)                     {source: DE431mx}
+Center body name: Solar System Barycenter (0)     {source: DE431mx}
+Center-site name: BODY CENTER
+*******************************************************************************
+Start time      : A.D. 2050-Jan-01 00:00:00.0000 TDB
+Stop  time      : A.D. 2050-Jan-02 00:00:00.0000 TDB
+Step-size       : 1440 minutes
+*******************************************************************************
+Center geodetic : 0.00000000,0.00000000,0.0000000 {E-lon(deg),Lat(deg),Alt(km)}
+Center cylindric: 0.00000000,0.00000000,0.0000000 {E-lon(deg),Dxy(km),Dz(km)}
+Center radii    : (undefined)                                                  
+Output units    : AU-D                                                         
+Output type     : GEOMETRIC cartesian states
+Output format   : 3 (position, velocity, LT, range, range-rate)
+Reference frame : ICRF/J2000.0                                                 
+Coordinate systm: Ecliptic and Mean Equinox of Reference Epoch                 
+*******************************************************************************
+JDTDB
+   X     Y     Z
+   VX    VY    VZ
+   LT    RG    RR
+*******************************************************************************
+$$SOE
+2469807.500000000 = A.D. 2050-Jan-01 00:00:00.0000 TDB 
+ X =-1.708105047795956E-01 Y = 9.648931350919518E-01 Z =-9.590189321159192E-05
+ VX=-1.721265688032099E-02 VY=-3.071877104787714E-03 VZ= 9.075238457855505E-07
+ LT= 5.659403860168597E-03 RG= 9.798954025240699E-01 RR=-2.442159326578237E-05
+2469808.500000000 = A.D. 2050-Jan-02 00:00:00.0000 TDB 
+ X =-1.879947894882198E-01 Y = 9.616710849921449E-01 Z =-9.493191927118634E-05
+ VX=-1.715505327058804E-02 VY=-3.372002153086044E-03 VZ= 1.027154047633500E-06
+ LT= 5.659281044384915E-03 RG= 9.798741376303177E-01 RR=-1.805990965657039E-05
+$$EOE
+*******************************************************************************
+Coordinate system description:
+
+  Ecliptic and Mean Equinox of Reference Epoch
+
+    Reference epoch: J2000.0
+    XY-plane: plane of the Earth's orbit at the reference epoch
+              Note: obliquity of 84381.448 arcseconds wrt ICRF equator (IAU76)
+    X-axis  : out along ascending node of instantaneous plane of the Earth's
+              orbit and the Earth's mean equator at the reference epoch
+    Z-axis  : perpendicular to the xy-plane in the directional (+ or -) sense
+              of Earth's north pole at the reference epoch.
+
+  Symbol meaning [1 au= 149597870.700 km, 1 day= 86400.0 s]:
+
+    JDTDB    Julian Day Number, Barycentric Dynamical Time
+      X      X-component of position vector (au)                               
+      Y      Y-component of position vector (au)                               
+      Z      Z-component of position vector (au)                               
+      VX     X-component of velocity vector (au/day)                           
+      VY     Y-component of velocity vector (au/day)                           
+      VZ     Z-component of velocity vector (au/day)                           
+      LT     One-way down-leg Newtonian light-time (day)                       
+      RG     Range; distance from coordinate center (au)                       
+      RR     Range-rate; radial velocity wrt coord. center (au/day)            
+
+Geometric states/elements have no aberrations applied.
+
+ Computations by ...
+     Solar System Dynamics Group, Horizons On-Line Ephemeris System
+     4800 Oak Grove Drive, Jet Propulsion Laboratory
+     Pasadena, CA  91109   USA
+     Information: http://ssd.jpl.nasa.gov/
+     Connect    : telnet://ssd.jpl.nasa.gov:6775  (via browser)
+                  http://ssd.jpl.nasa.gov/?horizons
+                  telnet ssd.jpl.nasa.gov 6775    (via command-line)
+     Author     : Jon.D.Giorgini@jpl.nasa.gov
+*******************************************************************************

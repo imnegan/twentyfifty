@@ -1,0 +1,257 @@
+print('hello world')
+
+from heapq import heappush, heappop
+import functools, itertools
+
+@functools.total_ordering
+class Event:
+	def __init__(self, eventTime, eventType):
+		self.eventTime=eventTime
+		self.eventType=eventType
+		
+	def __eq__(self, other):
+		return self.eventTime == other.eventTime
+		
+	def __lt__(self, other):
+		return self.eventTime < other.eventTime
+		
+	def __repr__(self):
+		return str(vars(self))
+		
+class EventManager:
+	def __init__(self):
+		self.eq=[] #heapq
+		self.lastEventTime=0.0
+		self.listeners=set()
+		self.name='event manager'
+		
+	def post(self):
+		while self.eq:
+			e=heappop(self.eq)
+			#if e.eventType!='tick': print(e)
+			print(e)
+			self.lastEventTime=e.eventTime
+			for listener in self.listeners:
+				listener.notify(e)
+				
+	def register(self, listener):
+		self.listeners.add(listener)
+		listener.newEvent(eventType='registered')
+		
+	def __repr__(self):
+		return self.name+': '+str(len(self.eq))+' events'
+		
+class Listener:
+	def __init__(self, eventManager, name='listener'):
+		self.em=eventManager
+		self.name=name
+		self.em.register(self)
+		
+	def __repr__(self):
+		return self.name
+		
+	def cancelEvents(self):
+		for e in self.em.eq:
+			if e.originator==self:
+				self.em.eq.remove(e)
+		
+	def newEvent(self, eventTime=None, eventType='event', **kwargs):
+		if eventTime is None:
+			eventTime=self.em.lastEventTime	#instant event
+		event=Event(eventTime, eventType)
+		event.originator=self
+		for key, value in kwargs.items():
+			setattr(event, key, value)
+		heappush(self.em.eq, event)
+		
+	def notify(self, event): pass
+	
+class Game(Listener):
+	def __init__(self, eventManager):
+		self.players=[]
+		name='game'
+		Listener.__init__(self, eventManager, name)
+		#post start game event
+		heappush(self.em.eq, Event(0.0, 'game start'))
+		
+class TimeController(Listener):
+	def __init__(self, eventManager):
+		name='time controller'
+		Listener.__init__(self, eventManager, name)
+		self.gameTime=0.0
+		self.dt=0.5
+		self.lastTick=self.gameTime
+		
+		self.counter=itertools.count()		#debug
+		self.count=next(self.counter)		#debug
+		
+	def notify(self, event):
+		self.gameTime=event.eventTime
+		if event.eventType=='game start':
+			self.tick()
+		if event.eventType=='tick' and self.count<=10:	#debug
+			self.lastTick=event.eventTime
+			self.tick()
+			self.count=next(self.counter)	#debug
+			
+	def tick(self):
+		_gameTime=self.lastTick+self.dt
+		Listener.newEvent(self, _gameTime, 'tick')
+		
+class Container(Listener):
+	def __init__(self, eventManager, capacity=float('inf'), name='container', qty=0):
+		Listener.__init__(self, eventManager, name)
+		self.capacity=capacity
+		self.qty=qty
+		
+	def deltaQ(self, amount):
+		self.qty+=(amount)
+		if self.qty==0:
+			self.newEvent(eventType='empty')
+		elif self.qty==self.capacity:
+			self.newEvent(eventType='full')
+		
+	def space(self):
+		return self.capacity-self.qty
+
+class ProcessIO:
+	'''process input or output'''
+	def __init__(self, container, ratio=1):
+		self.container=container
+		self.ratio=ratio				#eg 10*input --> 1*output
+		
+	def __repr__(self):
+		return str(vars(self))
+		
+	def qtyNeeded(self, dt, batchTime):
+		return dt/batchTime*self.ratio
+		
+	def limitQty(self, dt, batchTime):
+		amountNeeded=dt/batchTime*self.ratio
+		limit=self.container.qty/self.qtyNeeded(dt, batchTime)
+		if limit>1: limit=1
+		print(self.container.name, ':')
+		print('amount needed:', amountNeeded)
+		print('qty:', self.container.qty)
+		print ('qty/needed:', test)
+		return limit
+	
+	def testSpace(self, dt, batchTime):
+		'''returns the % that can be delivered in dt.
+		if there's enough qty left, return 1.
+		'''
+		spaceAvail=self.container.space()*dt/batchTime
+		if spaceAvail>1: return 1
+		else: return spaceAvail
+		
+class Process(Listener):
+	'''
+	 - setup
+		 - length of time for 1*batch DONE
+		 - Load inputs and outputs DONE
+	 - queue production DONE
+		 - schedule completion DONE
+	 - production
+		 * check there are enough inputs --> limiting factor
+		 * check there is enough space --> limiting factor
+	 - reschedule completion if:
+		 - limiting factor
+		 - queue production
+	 - production:
+		 - draw down inputs
+		 - produce outputs
+	'''
+
+
+	def __init__(self, eventManager, batchTime, name='process'):
+		Listener.__init__(self, eventManager, name)
+		self.batchTime=batchTime
+		self.inputs=[]
+		self.outputs=[]
+		self.lastUpdate=None
+		self.batchQ=0
+		
+	def addInput(self, container, amount):
+		self.inputs.append(ProcessIO(container, amount))
+		
+	def addOutput(self, container, amount):
+		self.outputs.append(ProcessIO(container, amount))
+		
+	def process(self, event):
+		print()
+		print('processing')
+		deltaTime=self.dt(event)
+		#1. check limiting input qty's and output space
+		limit=1
+		for i in self.inputs:
+			tq=i.testQty(deltaTime, self.batchTime)
+			if tq<limit: limit=tq
+		for o in self.outputs:
+			ts=o.testSpace(deltaTime, self.batchTime)
+			if ts<limit: limit=ts
+		
+		#2. process for limiting input qty or output space
+		for i in self.inputs:
+			i.container.deltaQ(-limit*deltaTime/self.batchTime)
+		for o in self.outputs:
+			o.container.deltaQ(limit*deltaTime/self.batchTime)
+			
+		#3. reduce queue
+		self.batchQ-=limit*deltaTime/self.batchTime
+		
+		#4. update time
+		self.updateTime(event)
+		
+	def queueBatch(self, amount, currentTime):
+		self.cancelEvents()	#Delete scheduledCompletion event
+		self.batchQ+=amount
+		scheduledCompletion=currentTime+self.batchTime*self.batchQ
+		self.newEvent(eventType='scheduled completion', eventTime=scheduledCompletion)
+			
+	def dt(self, event):
+		return event.eventTime-self.lastUpdate
+		
+	def updateTime(self, event):
+		self.lastUpdate=event.eventTime
+		
+	def notify(self, event):
+		if event.eventType=='queue process':
+			if event.process==self:
+				self.queueBatch(event.amount, event.eventTime)
+				self.updateTime(event)
+		elif self.batchQ>0:
+			if event.eventType=='tick': 
+				self.process(event)
+		
+def main():
+	em = EventManager()
+	g = Game(em)
+	tc=TimeController(em)
+	#sc=SupplyChain(em)
+	
+	c1=Container(em, name='c1', qty=20, capacity=100)
+	c2=Container(em, name='c2', qty=1, capacity=10)
+	
+	#input Containers
+	ore=Container(em, name='ore', qty=100)
+	energy=Container(em, name='energy', qty=9)
+	
+	#output Containers
+	steel=Container(em, name='steel')
+	heat=Container(em, name='heat')
+	
+	p=Process(em, 5)
+	p.addInput(ore, 10)
+	p.addInput(energy, 1)
+	p.addOutput(steel, 1)
+	p.addOutput(heat, 100)
+	print(vars(p))
+	
+	p.newEvent(eventType='scheduled completion', eventTime=3.1)
+	
+	p.newEvent(eventType='queue process', eventTime=0.1, process=p, amount=1)
+	
+	em.post()
+
+if __name__ == "__main__":
+	main()

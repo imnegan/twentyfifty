@@ -1,0 +1,117 @@
+from random import random
+
+class StateMachine:
+	def __init__(self, name, states, transitions, initialState):
+		self.name=name
+		self.states=set()
+		self.transitions=set()
+		self.state=None
+		
+		for s in states:
+			_s=State(s)
+			self.states.add(_s)
+			if self.state==None:
+				self.state=_s
+			elif s==initialState:
+				self.state=_s
+				
+		for t in transitions:
+			self.addTransition(t)
+		
+	def addTransition(self, transition):
+		name=transition[0]
+		for s in self.states:
+			#fromState
+			if s.name==transition[1]:
+				fromState=s
+			#toState
+			elif s.name==transition[2]:
+				toState=s
+		#condition
+		condition=getattr(self, transition[3])
+		#action		
+		if len(transition)==5:
+			action = getattr(self, transition[4])()
+		else:
+			action=self.passAction
+		t=Transition(name, fromState, toState, condition, action)
+		fromState.transitions.add(t)
+		
+	def passAction(self):
+		print('pass!!!')
+	
+	def run(self):
+		self.state=self.state.testTransitions()
+		
+	def __repr__(self):
+		return self.name+':'+str(self.states)
+		
+class State:
+	def __init__(self, name='state'):
+		self.name=name
+		self.transitions=set()
+		
+	def __repr__(self):
+		return self.name+':'+str(self.transitions)
+		
+	def testTransitions(self):
+		state=self
+		for t in self.transitions:
+			if t.condition() is True:
+				t.action()
+				state=t.toState
+		return state
+		
+class Transition:
+	def __init__(self, name, fromState, toState, condition, action): 
+		self.name=name
+		self.fromState=fromState
+		self.toState=toState
+		self.condition=condition
+		self.action=action
+		
+	def __repr__(self):
+		return self.name
+		
+class TestSM(StateMachine):
+	def __init__(self, name, states, transitions, initialState):
+		StateMachine.__init__(self, name, states, transitions, initialState)
+		
+	def testCondition(self):
+		print('testCondition!!!')
+		return True
+		
+class Miner(StateMachine):
+
+	states=['searching', 'going', 'mining', 'returning', 'unloading']
+	transitions=[
+		['foundTarget', 'searching', 'going', 'randomCondition'],
+		['arrived', 'going', 'mining', 'randomCondition'],
+		['notFinishedMining', 'mining', 'mining', 'randomCondition'],
+		['finishedMining', 'mining', 'returning', 'randomCondition'],
+		['arrived', 'returning', 'unloading', 'randomCondition'],
+		['holdEmpty', 'unloading', 'searching', 'randomCondition']
+	]
+	
+	def __init__(self, name='miner'):
+		StateMachine.__init__(self, name, self.states, self.transitions, 'searching')
+		
+	def randomCondition(self):
+		test = random()
+		print(test)
+		return test > 0.5
+
+states=['a', 'b', 'c']
+transitions=[
+	['aTOb', 'a', 'b', 'testCondition'],
+	['bTOc', 'b', 'c', 'testCondition'],
+	['cTOa', 'c', 'a', 'testCondition'],
+	]
+sm=TestSM('testSM', states, transitions, 'a')
+
+for s in sm.states:
+	print(s.name)
+
+m=Miner()
+
+print('fin')		

@@ -1,0 +1,7 @@
+import logging
+
+class dummy:
+	
+	def default(self):
+		logging.error('default function')
+		

@@ -1,0 +1,8 @@
+trigger,source,dest,conditions,unless,before,after,prepare
+startMining,fossicking,mining,foundOre
+keepMining,mining,=,None,isFull,mine
+finishedMining,mining,returning,isFull
+startUnloading,returning,unloading
+keepUnloading,unloading,=,None,isEmpty,unload
+finishedUnloading,unloading,fossicking,isEmpty,,countCycle
+finishedMining,*,idle,isFinished

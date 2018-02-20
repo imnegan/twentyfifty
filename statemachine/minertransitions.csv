@@ -1,0 +1,7 @@
+name,fromState,toState,condition,action
+finishedUnloading,unloading,fossicking,isEmpty,cycle
+foundOre,fossicking,mining,foundOre,mine
+keepMining,mining,mining,isNotFull,mine
+finishedMining,mining,returning,isFull
+arrivedHome,returning,unloading,isHome,unload
+keepUnloading,unloading,unloading,isNotEmpty,unload

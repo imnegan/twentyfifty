@@ -1,0 +1,31 @@
+class WIPStateMachine:
+  def __init__(self, consumable=10, consumeRate=1, WIP=0, WIPRate=10):
+    self.consumable=consumable
+    self.WIP=WIP
+    self.consumeRate=1
+    self.WIPRate=10
+    self.state=self.standby
+    
+  def run(self):
+    self.state()
+  
+  #States    
+  def standby(self):
+    print('start')
+    if self.consumable>=self.consumeRate:
+      self.state=self.WIPing
+      
+  def WIPing(self):
+    print('WIPing.. consumable:', self.consumable, 'WIP:', self.WIP)
+    if self.WIP>=100:
+      self.state=self.stop
+    elif self.consumable<self.consumeRate:
+      self.state=self.standby
+    else:
+      self.consumable-=self.consumeRate
+      self.WIP+=self.WIPRate
+      
+  def stop(self):
+    print('stop')
+    
+shipYard=WIPStateMachine()
