@@ -2,8 +2,6 @@
 import csv, os, logging
 from collections import defaultdict
 
-
-
 def getTransitionsFromCsv(filename):
 	
 	main_dir = os.path.split(os.path.abspath(__file__))[0]
@@ -18,11 +16,12 @@ def getTransitionsFromCsv(filename):
 		print(drow)
 	
 	return transitions
-
+	
 class StateMachine:
 	
-	def __init__(self, transitions, initialState=None):
+	def __init__(self, name='stateMachine', transitions=None):
 		
+		self.name=name
 		self.states=defaultdict(set)
 		self.state=None
 		self.lastState=None
@@ -68,35 +67,6 @@ class StateMachine:
 	def defaultPostAction(self):
 		logging.error('defaultPostAction')
 	'''
-
-class Transition:
-	
-	def __init__(self, stateMachine, name=None, fromState=None, toState=None, condition=None, action=None): #, negations=None, postActions=None):
-		
-		self.stateMachine=stateMachine
-		self.name=name
-		
-		self.fromState=fromState
-		self.toState=toState
-		
-		stateMachine.states[fromState].add(self)
-		
-		self.condition=getattr(stateMachine, condition, stateMachine.defaultCondition)
-		#if condition function is true the state is changed to the target state
-		
-		#self.negations=negations #negative conditions 'not condition'
-		
-		if action != None:
-			self.action=getattr(stateMachine, action, stateMachine.defaultAction)
-		else:
-			logging.warning('no action added')
-		#actions run before the transition
-		
-		#self.postActions=postActions #actions run after the transition
-		
-	def __repr__(self):
-		return str(self.name)
-		
 
 if __name__ == "__main__":
 	

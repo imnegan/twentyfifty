@@ -14,6 +14,6 @@ def getTransitionsFromCsv(filename):
 			if v=='None' or v=='':
 				drow[k]=None
 		transitions.append(drow)
-		print(drow)
+		#print(drow)
 	
 	return transitions

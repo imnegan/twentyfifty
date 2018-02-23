@@ -1,23 +1,8 @@
 from transitions import Machine
-import csv, os
+from gettransitions import getTransitionsFromCsv
+import logging
 
-def getTransitionsFromCsv(filename):
-	
-	main_dir = os.path.split(os.path.abspath(__file__))[0]
-	csvfile = open(os.path.join(main_dir, filename))
-	
-	reader = csv.DictReader(csvfile)
-	transitions=[]
-	
-	for row in reader:
-		drow=dict(row) #dict row
-		for k, v in drow.items():
-			if v=='None' or v=='':
-				drow[k]=None
-		transitions.append(drow)
-		print(drow)
-	
-	return transitions
+logging.basicConfig(level=logging.NOTSET)
 
 '''
 transition notes
@@ -47,21 +32,29 @@ class Miner:
 		self.capacity=capacity
 		self.qty=qty
 		self.count=0
+		self.runningTransitions=False
 		
 		self.machine = Machine(model=self, 
 			states=Miner.states, 
 			transitions=Miner.transitions, 
 			initial=Miner.initial,
 			auto_transitions=False)
+			
+		for state in Miner.states:
+			on_exit=getattr(self.machine, 'on_exit_'+state)
+			on_exit('stopRunningTransitions')
+			print('stopRunningTransitions() added to', state)
 		
 	def run(self):
-		print('start state:', self)
-		for trigger in self.machine.get_triggers(self.state):
-			print('trigger:', trigger)
-			trigger=getattr(self, trigger)
-			trigger()
-		print('new state:', self)
-		print('\n')
+		self.runningTransitions=True
+		while self.runningTransitions:
+			print('start state:', self.state)
+			for trigger in self.machine.get_triggers(self.state):
+				print('trigger:', trigger)
+				trigger=getattr(self, trigger)
+				trigger()
+			print('new state:', self.state)
+			print('\n')
 	
 	# ---[conditions
 	def foundOre(self):
@@ -80,7 +73,7 @@ class Miner:
 		print('isFinished='+str(self.count<5))
 		return self.count==5
 		
-	# ---[before actions
+	# ---[actions
 	def mine(self):
 		print('mine')
 		self.qty+=1
@@ -89,19 +82,22 @@ class Miner:
 		print('unload')
 		self.qty-=1
 		
-	# ---[after actions
 	def countCycle(self):
 		print('countCycle')
 		self.count+=1
 
+	# ---[on_enter/on_exit state functions
+	def stopRunningTransitions(self):
+		logging.warning('stopRunningTransitions')
+		self.runningTransitions=False
 		
 	# ---[special properties
-	def __repr__(self):
+	'''def __repr__(self):
 		d={'state':self.state, 'qty':self.qty, 'capacity':self.capacity, 'count':self.count}
-		return self.name+str(d)
+		return self.name+str(d)'''
 			
 m=Miner()
+
 while m.state!='idle':
 	m.run()
-
 	
