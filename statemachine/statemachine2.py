@@ -20,13 +20,11 @@ class StateMachine:
 		''' set to the fromState from the first transition '''
 		pass
 		
-	X
 	def run(self, event):
 		changeState=True
 		while changeState is True:
 			for condition in self.transitions[self.state].conditions:
-				if len
-				changeState=condition()'''
+				changeState&=condition()
 		
 	# ---[condition/negation functions
 	
@@ -55,9 +53,14 @@ class Transition:
 	
 	def run(self):
 		
-		#https://github.com/pytransitions/transitions#-execution-order
+		# https://github.com/pytransitions/transitions#-execution-order
+		msg='Running transition..'
+		logging.debug(msg)
 		
-		logging.debug()
+		msg='Running '+str(len(self.prepare))+' prepare functions..'
+		logging.debug(msg)
+		for func in self.prepare:
+			func(self.stateMachine, event)
 		
 	def setFunctions(self, funcNames):
 		funcList=list(funcNames)
@@ -79,12 +82,5 @@ class Transition:
 		
 		
 # ---[testing ground
-class dummy:
-	def a(self):
-		print('a')
-	def b(self):
-		print('b')
-	def c(self):
-		print('c')
-
+.
 

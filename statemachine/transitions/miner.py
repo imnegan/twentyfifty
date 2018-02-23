@@ -1,4 +1,7 @@
 from transitions import Machine
+import logging
+
+logging.basicConfig(level='NOTSET')
 
 '''
 transition notes
@@ -41,13 +44,13 @@ class Miner:
 			auto_transitions=False)
 		
 	def run(self):
-		print('start state:', self)
+		#print('start state:', self)
 		for trigger in self.machine.get_triggers(self.state):
-			print('trigger:', trigger)
+			#print('trigger:', trigger)
 			trigger=getattr(self, trigger)
 			trigger()
-		print('new state:', self)
-		print('\n')
+		#print('new state:', self)
+		#print('\n')
 	
 	# ---[conditions
 	def foundOre(self):
