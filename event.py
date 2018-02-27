@@ -63,12 +63,6 @@ class EventController(DefaultObject):
 		if member in self.members:
 			self.members.remove(member)
 		
-	def postBAK(self, event):
-		if event.type!='tick': print(event)
-		for member in self.members.copy():
-			member.recieveEvent(event)
-		#logging.debug('EventController.post(event)'+str(event.__dict__))
-		
 	def post(self, event):
 		#if event has no time then broadcast immediately
 		if event.t == 0:
@@ -93,7 +87,7 @@ class EventController(DefaultObject):
 	
 	def broadcast(self, event):
 		for member in self.members.copy():
-			member.recieveEvent(event)
+			member.onEvent(event)
 		if event.type!='tick':
 			logging.debug('broadcasting:'+str(event))
 			
