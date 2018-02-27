@@ -113,10 +113,19 @@ class EventControllerMember(DefaultObject):
 					result.add(event)
 		return result
 		
-	def recieveEvent(self, event):
+	def onEvent(self, event):
 		pass
 
+def test():
+	ec=EventController()
+	ecm1=EventControllerMember(ec)
+	ecm2=EventControllerMember(ec)
+	
+	ecm1.post(Event('Hello from ecm1'))
+	ecm2.post(Event('Hello from ecm2'))
+		
 if __name__ == "__main__":
 	logging.debug('event.py is being run directly')
+	test()
 else:
 	logging.debug('event.py loaded.')
