@@ -89,7 +89,7 @@ class EventController(DefaultObject):
 		for member in self.members.copy():
 			member.onEvent(event)
 		if event.type!='tick':
-			logging.debug('broadcasting:'+str(event))
+			logging.warning('broadcasting:'+str(event))
 			
 	def deleteQueuedEvents(self, member):
 		self.eventQueue-=member.queuedEvents()

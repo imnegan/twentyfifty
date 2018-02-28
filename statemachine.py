@@ -80,7 +80,7 @@ class StateMachine(EventControllerMember):
 				#self.post(Event(type='transition', transition=t))
 				break
 				
-Transition=namedtuple('Transition', ['fromState', 'toState', 'conditions', 'negations', 'actions'])
+Transition=namedtuple('Transition', ['name', 'fromState', 'toState', 'conditions', 'negations', 'actions'])
 Transition.__new__.__defaults__ = (None, None, None)
 
 # --- testing ground
@@ -88,35 +88,28 @@ Transition.__new__.__defaults__ = (None, None, None)
 class TestSM(StateMachine):
 
 	transitionData=[
-	['s1', 's2', 'condition', None, 'action'],
-	['s2', 's1', 'condition', None, 'action'],
-	['*', 's1', 'condition']
+	['s12', 's1', 's2', 'condition', None, 'action'],
+	['s21', 's2', 's1', 'condition', None, 'action'],
+	['s*1', '*', 's1', 'condition']
 	]
 	
 	def __init__(self, eventController):
 		self.count=0
 		StateMachine.__init__(self, eventController, TestSM.transitionData)
 
-		
 	def condition(self, event):
-		print('start', self.state)
 		if event.type=='tick' and self.count<10:
-			print('condition is True')
 			return True
 		else: 
-			print('condition is False')
 			return False
 		
 	def action(self, event):
 		self.count+=1
-		print('Action!', self.count)
 		self.post(Event(type=='tick'))
 		
 def test():
 	ec=EventController()
 	tsm=TestSM(ec)
-	
-	
 	ec.post(Event(type='tick'))
 	'''
 	print(tsm.state)
