@@ -1,133 +1,131 @@
-from heapq import heappush, heappop
-import functools
+import logging
+import os
+import heapq
 
-class EventManager:
-	def __init__(self):
-		self.eq=[] 	#event queue - heapq
-		self.lastETime=0.0
-		self.listeners=set()
-		self.name='event manager'
-	
+main_dir = os.path.split(os.path.abspath(__file__))[0]
+#data_dir = os.path.join(main_dir, 'data')
+
+#Logging debugging
+logging.basicConfig(level=logging.NOTSET)
+
+''' 
+logging.debug("This is a debug message")
+logging.info("Informational message")
+logging.error("An error has happened!")
+
+
+Level			Numeric value
+CRITICAL	50
+ERROR			40
+WARNING		30
+INFO			20
+DEBUG			10
+NOTSET		0
+'''
+
+class DefaultObject:
 	def __repr__(self):
-		return self.name+': '+str(len(self.eq))+' events'
-		
-	def newEvent(self, event):
-		if event.eTime is None:
-			event.eTime=self.lastETime	#instant event
-		heappush(self.eq, event)
+		repr=str(self.__class__.__name__)
+		if hasattr(self, 'name'):
+			repr=repr+'{name:'+self.name+'}'
+		return repr
 
-	def post(self):
-		#while self.eq:
-		e=heappop(self.eq)
-		print(e)
-		self.lastETime=e.eTime
-		for listener in self.listeners:
-			listener.notify(e)				
-
-	def register(self, listener):
-		self.listeners.add(listener)
-		self.newEvent(Register(listener, eTime=1.0))
-				
-#---Events
-@functools.total_ordering
-class Event:
-	def __init__(self, eTime=None, **kwargs):
-		self.eTime=eTime
+class Event(DefaultObject):
+	
+	def __init__(self, type='event', t=0, **kwargs):
+		self.type=type
+		self.t=t
 		for key, value in kwargs.items():
 			setattr(self, key, value)
 			
-	def __eq__(self, other):
-		return self.eTime == other.eTime
-		
 	def __lt__(self, other):
-		return self.eTime < other.eTime
-		
+		return self.t < other.t
+			
 	def __repr__(self):
-		return str(self.__class__.__name__)+str(vars(self))
-
-class Complete(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
+		return 'Event'+str(self.__dict__)
+		
+class EventController(DefaultObject):
 	
-class Delivery(Event):
-	def __init__(self, toC, amount, **kwargs):
-		Event.__init__(self, toC=toC, amount=amount, **kwargs)
-
-class DeltaDt(Event):
-	def __init__(self, dt, **kwargs):
-		Event.__init__(self, dt=dt, **kwargs)
-	
-class Empty(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-	
-class EndOfEq(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-	
-class Exit(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-	
-class Full(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-
-class Pause(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-
-class QProcess(Event):
-	def __init__(self, amount, process, **kwargs):
-		Event.__init__(self, amount=amount, process=process, **kwargs)
-
-class Register(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-
-class Requisition(Event):
-	def __init__(self, fromC, toC, amount, check=True, **kwargs):
-		Event.__init__(self, fromC=fromC, toC=toC, amount=amount, check=check, **kwargs)
-
-class SoundOff(Event):
-	'''Request all listeners to give their status'''
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-
-class Start(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-	
-class StartGame(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-	
-class Tick(Event):
-	def __init__(self, **kwargs):
-		Event.__init__(self, **kwargs)
-
-class Listener:
-	def __init__(self, em, name='listener'):
+	def __init__(self, name='eventController'):
 		self.name=name
-		self.register(em)
+		self.members=set()
+		self.eventQueue=[]
+		heapq.heapify(self.eventQueue)
 		
-	def __repr__(self):
-		return self.name
+		#self.post(Event(type='EventController.__init__', ec=self))
 		
-	def newEvent(self, event):
-		event.originator=self
-		self.em.newEvent(event)
+	def register(self, member):
+		self.members.add(member)
+		self.post(Event(type=member.__class__.__name__+'.__init__', object=member))
+		#self.post(Event(type=self.name+'.register', member=member))
 		
-	def register(self, em):
-		self.em=em
-		self.em.listeners.add(self)
-		self.newEvent(Register())
+	def deregister(self, member):
+		if member in self.members:
+			self.members.remove(member)
 		
-	def soundoff(self):
-		print(vars(self))
-				
-	def notify(self, event): pass
+	def post(self, event):
+		#if event has no time then broadcast immediately
+		if event.t == 0:
+			self.broadcast(event)
+		#if event has a scheduled time add event to eventQueue
+		elif event.t>0 and event.type!='tick':
+			logging.debug('scheduling event:'+str(event))
+			heapq.heappush(self.eventQueue, event)
+		#2. if event is a tick then iterate through eventQueue where e.t<=tick.t
+		elif event.type=='tick':
+			if len(self.eventQueue)>0:
+				t=self.eventQueue[0].t
+				while t<=event.t:
+					logging.debug('broadcasting queued event:')
+					self.broadcast(heapq.heappop(self.eventQueue))
+					if len(self.eventQueue)>0:
+						t=self.eventQueue[0].t
+					else:
+						t=event.t+1
+			#broadcast the tick
+			self.broadcast(event)
 	
-class Test:
-	one=1
+	def broadcast(self, event):
+		for member in self.members.copy():
+			member.onEvent(event)
+		if event.type!='tick':
+			logging.debug('broadcasting:'+str(event))
+			
+	def deleteQueuedEvents(self, member):
+		self.eventQueue-=member.queuedEvents()
+			
+class EventControllerMember(DefaultObject):
+	
+	def __init__(self, eventController):
+		self.ec=eventController
+		eventController.register(self)
+		
+	def post(self, event):
+		e=event
+		e.object=self
+		self.ec.post(e)
+	
+	def queuedEvents(self):
+		result=set()
+		for event in self.ec.eventQueue:
+			if hassattr(event, 'object'):
+				if event.object==self:
+					result.add(event)
+		return result
+		
+	def onEvent(self, event):
+		pass
 
+def test():
+	ec=EventController()
+	ecm1=EventControllerMember(ec)
+	ecm2=EventControllerMember(ec)
+	
+	ecm1.post(Event('Hello from ecm1'))
+	ecm2.post(Event('Hello from ecm2'))
+		
+if __name__ == "__main__":
+	logging.debug('event.py is being run directly')
+	test()
+else:
+	logging.debug('event.py loaded.')

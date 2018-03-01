@@ -28,21 +28,21 @@ def listify(obj):
 	else:
 		return obj if isinstance(obj, (list, tuple, type(None))) else [obj]
 		
-class StateMachine(EventControllerMember):
+class StateMachine(EventMember):
 
-	#transitionData=[[fromState, toState, conditions, negations, actions]]
+	#transitionData=[[name, fromState, toState, conditions, negations, actions]]
 
 	def __init__(self, eventController, transitionData):
 	
-		self.state=transitionData[0][0]
+		self.state=transitionData[0][1]
 		self.lastState=None
 		self.states=defaultdict(set)
 		
 		for row in transitionData:
 			#if row[0]!='*':
-			self.states[row[0]].add(Transition(*row))
+			self.states[row[1]].add(Transition(*row))
 			
-		EventControllerMember.__init__(self, eventController)
+		EventMember.__init__(self, eventController)
 		
 	def testConditionsAndNegations(self, event, conditions, negations):
 		result=True
@@ -70,17 +70,16 @@ class StateMachine(EventControllerMember):
 		return True
 		
 	def onEvent(self, event):
-		for t in self.states[self.state]:
-			logging.debug(t)
-			if self.testConditionsAndNegations(event, t.conditions, t.negations):
-				self.runActions(event, t.actions)
-				self.lastState=self.state
-				self.state=t.toState
-				#TODO: post transition event
-				#self.post(Event(type='transition', transition=t))
-				break
+		for s in '*', self.state:
+			for t in self.states[s]:
+				if self.testConditionsAndNegations(event, t.conditions, t.negations):
+					self.runActions(event, t.actions)
+					self.lastState=self.state
+					self.state=t.toState
+					self.post(Event(type='transition'))
+					break
 				
-Transition=namedtuple('Transition', ['fromState', 'toState', 'conditions', 'negations', 'actions'])
+Transition=namedtuple('Transition', ['name', 'fromState', 'toState', 'conditions', 'negations', 'actions'])
 Transition.__new__.__defaults__ = (None, None, None)
 
 # --- testing ground
@@ -88,9 +87,10 @@ Transition.__new__.__defaults__ = (None, None, None)
 class TestSM(StateMachine):
 
 	transitionData=[
-	['s1', 's2', 'condition', None, 'action'],
-	['s2', 's1', 'condition', None, 'action'],
-	['*', 's1', 'condition']
+	['s12', 's1', 's2', 'condition', None, 'action'],
+	['s21', 's2', 's1', 'condition', None, 'action'],
+	['s*-idle', '*', 'idle', None, 'condition'],
+	['idling', 'idle', 'idle']
 	]
 	
 	def __init__(self, eventController):
@@ -99,18 +99,18 @@ class TestSM(StateMachine):
 
 		
 	def condition(self, event):
-		print('start', self.state)
+		logging.debug('start state'+self.state)
 		if event.type=='tick' and self.count<10:
-			print('condition is True')
+			logging.debug('condition is True')
 			return True
 		else: 
-			print('condition is False')
+			logging.debug('condition is False')
 			return False
 		
 	def action(self, event):
 		self.count+=1
-		print('Action!', self.count)
-		self.post(Event(type=='tick'))
+		logging.debug('Action!'+str(self.count))
+		self.post(Event(type='tick'))
 		
 def test():
 	ec=EventController()
@@ -118,6 +118,8 @@ def test():
 	
 	
 	ec.post(Event(type='tick'))
+	
+	print(tsm.states)
 	'''
 	print(tsm.state)
 	
