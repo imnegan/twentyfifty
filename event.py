@@ -58,6 +58,14 @@ class EventController:
 		logging.debug(event)
 		for member in self.members:
 			member.onEvent(event)
+<<<<<<< HEAD
+=======
+		if event.type!='tick':
+			logging.warning('broadcasting:'+str(event))
+			
+	def deleteQueuedEvents(self, member):
+		self.eventQueue-=member.queuedEvents()
+>>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
 			
 	def deleteEvents(self, member):
 		for event in self.queue:

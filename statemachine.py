@@ -89,34 +89,45 @@ class TestSM(StateMachine):
 	transitionData=[
 	['s12', 's1', 's2', 'condition', None, 'action'],
 	['s21', 's2', 's1', 'condition', None, 'action'],
+<<<<<<< HEAD
 	['s*-idle', '*', 'idle', None, 'condition'],
 	['idling', 'idle', 'idle']
+=======
+	['s*1', '*', 's1', 'condition']
+>>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
 	]
 	
 	def __init__(self, eventController):
 		self.count=0
 		StateMachine.__init__(self, eventController, TestSM.transitionData)
 
-		
 	def condition(self, event):
+<<<<<<< HEAD
 		logging.debug('start state'+self.state)
 		if event.type=='tick' and self.count<10:
 			logging.debug('condition is True')
 			return True
 		else: 
 			logging.debug('condition is False')
+=======
+		if event.type=='tick' and self.count<10:
+			return True
+		else: 
+>>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
 			return False
 		
 	def action(self, event):
 		self.count+=1
+<<<<<<< HEAD
 		logging.debug('Action!'+str(self.count))
 		self.post(Event(type='tick'))
+=======
+		self.post(Event(type=='tick'))
+>>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
 		
 def test():
 	ec=EventController()
 	tsm=TestSM(ec)
-	
-	
 	ec.post(Event(type='tick'))
 	
 	print(tsm.states)
