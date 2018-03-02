@@ -58,14 +58,13 @@ class EventController:
 		logging.debug(event)
 		for member in self.members:
 			member.onEvent(event)
-<<<<<<< HEAD
-=======
+
 		if event.type!='tick':
-			logging.warning('broadcasting:'+str(event))
+			logging.debug('broadcasting:'+str(event))
 			
 	def deleteQueuedEvents(self, member):
 		self.eventQueue-=member.queuedEvents()
->>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
+
 			
 	def deleteEvents(self, member):
 		for event in self.queue:
@@ -86,7 +85,7 @@ def test():
 
 		
 if __name__ == "__main__":
-	logging.debug('event.py is being run directly')
+	logging.info('event.py is being run directly')
 	test()
 else:
-	logging.debug('event.py loaded.')
+	logging.info('event.py loaded.')

@@ -1,6 +1,5 @@
-from collections import defaultdict, namedtuple
-import logging, csv, os
-
+import logging
+from transitions import Machine, State
 from event import *
 
 def getTransitionsFromCsv(filename):
@@ -21,131 +20,91 @@ def getTransitionsFromCsv(filename):
 	
 	return transitions
 
-def listify(obj):
-	'''from transitions repo'''
-	if obj is None:
-		return []
-	else:
-		return obj if isinstance(obj, (list, tuple, type(None))) else [obj]
-		
-class StateMachine(EventMember):
-
-	#transitionData=[[name, fromState, toState, conditions, negations, actions]]
-
-	def __init__(self, eventController, transitionData):
+class StateMachine:
 	
-		self.state=transitionData[0][1]
-		self.lastState=None
-		self.states=defaultdict(set)
+	def __init__(self, states, initial, transitions):
 		
-		for row in transitionData:
-			#if row[0]!='*':
-			self.states[row[1]].add(Transition(*row))
-			
-		EventMember.__init__(self, eventController)
+		self.transitioning=False
 		
-	def testConditionsAndNegations(self, event, conditions, negations):
-		result=True
-		for condition in listify(conditions):
-			logging.debug('...'+condition+' is '+str(getattr(self, condition, self.defaultCondition)(event)))
-			result=result and getattr(self, condition, self.defaultCondition)(event)
-		for negation in listify(negations):
-			result=result and not getattr(self, negation, self.defaultNegation)(event)
-		logging.debug('...testConditionsAndNegations is '+str(result))
-		return result
+		stateDict=[]
+		for state in states:
+			stateDict.append(State(state, on_exit='endTransition'))
 		
-	def runActions(self, event, actions):
-		for action in listify(actions):
-			getattr(self, action, self.defaultAction)(event)
-		
-	def defaultCondition(self, event):
-		logging.error('defaultCondition')
-		return False
-		
-	def defaultAction(self, event):
-		logging.error('defaultAction')
-		
-	def defaultNegation(self, event):
-		logging.error('defaultNegation')
-		return True
+		self.machine = Machine(model=self, 
+			states=stateDict,
+			transitions=transitions, 
+			initial=initial,
+			auto_transitions=False)
 		
 	def onEvent(self, event):
-		for s in '*', self.state:
-			for t in self.states[s]:
-				if self.testConditionsAndNegations(event, t.conditions, t.negations):
-					self.runActions(event, t.actions)
-					self.lastState=self.state
-					self.state=t.toState
-					self.post(Event(type='transition'))
-					break
-				
-Transition=namedtuple('Transition', ['name', 'fromState', 'toState', 'conditions', 'negations', 'actions'])
-Transition.__new__.__defaults__ = (None, None, None)
+		self.transitioning=True
+		transitions=self.machine.get_triggers(self.state)
+		count=0
+		while self.transitioning:
+			getattr(self, transitions[count])(event)
+			count+=1
 
-# --- testing ground
-
-class TestSM(StateMachine):
-
-	transitionData=[
-	['s12', 's1', 's2', 'condition', None, 'action'],
-	['s21', 's2', 's1', 'condition', None, 'action'],
-<<<<<<< HEAD
-	['s*-idle', '*', 'idle', None, 'condition'],
-	['idling', 'idle', 'idle']
-=======
-	['s*1', '*', 's1', 'condition']
->>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
-	]
+	def endTransition(self, event):
+		self.transitioning=False
+	
+class Miner(StateMachine, EventMember):
+	
+	states=['fossicking', 'mining', 'returning', 'unloading', 'idle']
+	initial='fossicking'
+	transitions=[
+		#[name, source, dest, conditions=None, unless=None, before=None, after=None, prepare=None]
+		['fuelEmpty', '*', 'idle', 'outOfFuel'],
+		['finishUnloading',	'unloading', 'fossicking', 'isEmpty', 'outOfFuel'],
+		['readyToMine', 'fossicking', 'mining', 'foundOre', 'outOfFuel'],
+		['keepMining', 'mining', 'mining', None, 'isFull', ['mine', 'consumeFuel']],
+		['finishMining', 'mining', 'returning', 'isFull', 'outOfFuel'],
+		['readyToUnload', 'returning', 'unloading', None, 'outOfFuel'],
+		['keepUnloading', 'unloading', 'unloading', None, 'isEmpty', 'unload'],
+		]
 	
 	def __init__(self, eventController):
-		self.count=0
-		StateMachine.__init__(self, eventController, TestSM.transitionData)
+		
+		self.fuel=10
+		self.capacity=3
+		self.qty=0
+		
+		StateMachine.__init__(self, self.states, self.initial, self.transitions)
+		EventMember.__init__(self, eventController)
+	
+	# --- Conditions
+	def isFull(self, event):
+		return self.qty==self.capacity
+		
+	def isEmpty(self, event):
+		return self.qty==0
+		
+	def outOfFuel(self, event):
+		return self.fuel==0
+		
+	def foundOre(self, event):
+		return True
+	
+	# --- Actions
+	def consumeFuel(self, event):
+		self.fuel-=1
+		logging.warning(self.fuel)
+		
+	def mine(self, event):
+		self.qty+=1
+		logging.info(self.qty)
+		
+	def unload(self, event):
+		self.qty-=1
 
-	def condition(self, event):
-<<<<<<< HEAD
-		logging.debug('start state'+self.state)
-		if event.type=='tick' and self.count<10:
-			logging.debug('condition is True')
-			return True
-		else: 
-			logging.debug('condition is False')
-=======
-		if event.type=='tick' and self.count<10:
-			return True
-		else: 
->>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
-			return False
-		
-	def action(self, event):
-		self.count+=1
-<<<<<<< HEAD
-		logging.debug('Action!'+str(self.count))
-		self.post(Event(type='tick'))
-=======
-		self.post(Event(type=='tick'))
->>>>>>> dcae2121c245eb0a2259371e33c450c81fcf8033
-		
 def test():
 	ec=EventController()
-	tsm=TestSM(ec)
-	ec.post(Event(type='tick'))
-	
-	print(tsm.states)
-	'''
-	print(tsm.state)
-	
-	for i in range(4):
-		print('start', tsm.state)
-		tsm.onEvent(Event(type='tick'))
-		print('end', tsm.state,'\n')
-		
-	print(tsm.lastState)
-	print(tsm)
-	'''
+	m=Miner(ec)
+	while m.state != 'idle':
+		m.onEvent(object)
 	
 if __name__== '__main__':
-	logging.info('Running stateMachine.py directly.')
+	logging.basicConfig(level=logging.INFO)
+	logging.info('Running statemachine.py directly.')
 	test()
 else:
-	logging.info('stateMachine.py loaded.')
-
+	logging.info('statemachine.py loaded.')
