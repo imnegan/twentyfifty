@@ -1,17 +1,19 @@
 from statemachine import StateMachine
 from event import *
 
-class Container(StateMachine):
+class Container(StateMachine, EventMember):
 	
-	states=['empty', 'full', 'partial']
+	states=['empty', 'full', 'stable', 'emptying', 'filling']
 	initial='empty'
 	transitions=[ #(name, source, dest, conditions=None, unless=None, before=None, after=None, prepare=None)
-		['toPartial', '*', 'partial', 'updateMe', ['isEmpty', 'isFull']],
-		['toEmpty', '*', 'Empty', 'isEmpty'],
-		['toFull', '*', 'Full', 'isFull'],
+		['beStable','*','stable','isStable'],
+		['startFilling',['empty', 'stable'],'filling','isFilling','isFull'],
+		['startEmptying',['full', 'stable'],'emptying','isEmptying','isEmpty'],
+		['stopFilling','filling','full',['isFull', 'isFilling'], None, None, 'fullCorrection'],
+		['stopEmptying','emptying','empty',['isEmpty', 'isEmptying'], None, None, 'emptyCorrection']
 		]
 	
-	def __init__(self, capacity=float('inf'), qty=0):
+	def __init__(self, eventController, capacity=float('inf'), qty=0):
 		
 		self.capacity=capacity
 		self.qty=qty
@@ -20,6 +22,13 @@ class Container(StateMachine):
 		self.lastupdate=0
 		
 		StateMachine.__init__(self, self.states, self.initial, self.transitions, prepare_event='prepare')
+		EventMember.__init__(self, eventController)
+		
+	def addPipe(self, type, pipe):
+		self.getattr(self, type).add(pipe)
+		
+	def removePipe(self, type, pipe):
+		self.getattr(self, type).remove(pipe)
 		
 	def dqdt(self):
 		_dqdt=0
@@ -27,12 +36,25 @@ class Container(StateMachine):
 			_dqdt+=i.flowRate()
 		for o in self.outputs:
 			_dqdt+=i.flowRate()
+		logging.debug('dqdt='+str(_dqdt))
+		return _dqdt
+		
+	def space(self):
+		return self.capacity-self.qty
+		
+	def timeToFull(self):
+		if self.isFilling() and not self.isFull():
+			return self.space()/self.dqdt
+			
+	def timeToEmpty(self):
+		if self.isEmptying and not self.isEmptying:
+			return self.qty/self.dqdt
 		
 	# --- machine.prepare_event
 	def prepare(self, event):
 		dt=event.t-self.lastupdate
 		if dt<0: dt=0
-		self.dty=dt*self.dqdt()
+		self.dt=dt*self.dqdt()
 		
 	# --- Conditions
 	def isFull(self, event):
@@ -40,8 +62,26 @@ class Container(StateMachine):
 		
 	def isEmpty(self, event):
 		return self.qty<=0
+		
+	def isFilling(self, event):
+		return self.dqdt()>0
+		
+	def isEmptying(self, event):
+		return self.dqdt()<0
+		
+	def isStable(self, event):
+		return self.dqdt()==0
 	
 	# --- Actions
+	def fullCorrection(self, event):
+		if self.qty>self.capacity:
+			logging.error('overcapacity, correcting..')
+			self.qty=self.capacity
+			
+	def emptyCorrection(self, event):
+		if self.qty<0:
+			logging.error('negative qty, correcting..')
+			self.qty=0
 	
 
 class Pipe(StateMachine):
@@ -62,7 +102,7 @@ class Pipe(StateMachine):
 		StateMachine.__init__(self, self.states, self.initial, self.transitions)
 		
 	def flowrate(self):
-		if self.fromContainer.state != 'empty':
+		if self.fromContainer.state != 'empty': pass
 			
 		
 	# --- Conditions
@@ -72,8 +112,8 @@ class Pipe(StateMachine):
 def test():
 	
 	ec=EventController()
-	asteroid=Container(capacity=10)
-	hold=Container(capacity=5)
+	asteroid=Container(ec, capacity=10)
+	hold=Container(ec, capacity=5)
 	#miner=Pipe(ec, asteroid, hold, 2)
 	
 	ec.post(Event('tick'))
