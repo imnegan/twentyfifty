@@ -1,6 +1,6 @@
 from event import *
 
-class Container(EventControllerMember):
+class Container(EventMember):
 	
 	#states
 	EMPTY='empty'
@@ -17,7 +17,7 @@ class Container(EventControllerMember):
 		self.outputs=set()
 		
 		#Event controller
-		EventControllerMember.__init__(self, eventController)
+		EventMember.__init__(self, eventController)
 
 	def space(self):
 		return self.capacity-self.qty
@@ -64,7 +64,7 @@ class Container(EventControllerMember):
 			try: return self.qty/-self.fillRate()
 			except: return 'div0'
 			
-	def recieveEvent(self, event):
+	def onEvent(self, event):
 		if event.type=='tick':
 			self.qty+=self.fillRate()*event.dt
 			logging.critical('\n'+str(event.t))

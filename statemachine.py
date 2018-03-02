@@ -22,7 +22,16 @@ def getTransitionsFromCsv(filename):
 
 class StateMachine:
 	
-	def __init__(self, states, initial, transitions):
+	def __init__(self, states, initial, transitions, **kwargs):
+		'''
+		def __init__(self, model='self', states=None, initial='initial', transitions=None,
+			 send_event=False, auto_transitions=True,
+			 ordered_transitions=False, ignore_invalid_triggers=None,
+			 before_state_change=None, after_state_change=None, name=None,
+			 queued=False, prepare_event=None, finalize_event=None, **kwargs):
+		'''
+	
+		#(name, source, dest, conditions=None, unless=None, before=None, after=None, prepare=None)
 		
 		self.transitioning=False
 		
@@ -34,7 +43,8 @@ class StateMachine:
 			states=stateDict,
 			transitions=transitions, 
 			initial=initial,
-			auto_transitions=False)
+			auto_transitions=False, 
+			**kwargs)
 		
 	def onEvent(self, event):
 		self.transitioning=True

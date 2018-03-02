@@ -5,8 +5,8 @@ class Container(StateMachine):
 	
 	states=['empty', 'full', 'partial']
 	initial='empty'
-	transitions=[
-		['toPartial', '*', 'partial', None, ['isEmpty', 'isFull']],
+	transitions=[ #(name, source, dest, conditions=None, unless=None, before=None, after=None, prepare=None)
+		['toPartial', '*', 'partial', 'updateMe', ['isEmpty', 'isFull']],
 		['toEmpty', '*', 'Empty', 'isEmpty'],
 		['toFull', '*', 'Full', 'isFull'],
 		]
@@ -17,8 +17,20 @@ class Container(StateMachine):
 		self.qty=qty
 		self.inputs=set()
 		self.outputs=set()
+		self.lastupdate=0
 		
-		StateMachine.__init__(self, self.states, self.initial, self.transitions)
+		StateMachine.__init__(self, self.states, self.initial, self.transitions, prepare_event='prepare')
+		
+	def dq(self):
+		_dq=0
+		for i in self.inputs:
+			_dq+=i.flowRate
+		
+	# --- machine.prepare_event
+	def prepare(self, event):
+		dt=event.t-self.lastupdate
+		if dt<0: dt=0
+		self.dty=dt*self.dq()
 		
 	# --- Conditions
 	def isFull(self, event):
