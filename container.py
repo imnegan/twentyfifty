@@ -21,16 +21,18 @@ class Container(StateMachine):
 		
 		StateMachine.__init__(self, self.states, self.initial, self.transitions, prepare_event='prepare')
 		
-	def dq(self):
-		_dq=0
+	def dqdt(self):
+		_dqdt=0
 		for i in self.inputs:
-			_dq+=i.flowRate
+			_dqdt+=i.flowRate()
+		for o in self.outputs:
+			_dqdt+=i.flowRate()
 		
 	# --- machine.prepare_event
 	def prepare(self, event):
 		dt=event.t-self.lastupdate
 		if dt<0: dt=0
-		self.dty=dt*self.dq()
+		self.dty=dt*self.dqdt()
 		
 	# --- Conditions
 	def isFull(self, event):
@@ -57,7 +59,11 @@ class Pipe(StateMachine):
 		self.toContainer=toContainer
 		self.maxRate=maxRate
 		
-		StateMachine.__init__(self, eventController, self.states, self.initial, self.transitions)
+		StateMachine.__init__(self, self.states, self.initial, self.transitions)
+		
+	def flowrate(self):
+		if self.fromContainer.state != 'empty':
+			
 		
 	# --- Conditions
 	
